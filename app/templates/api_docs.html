@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}API Документация - Task Manager{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h4 class="mb-0">Документация REST API</h4>
+    </div>
+    <div class="card-body">
+        <h5>Базовый URL: <code>/api</code></h5>
+        
+        <div class="mt-4">
+            <h6>Аутентификация</h6>
+            <p>Все защищенные эндпоинты требуют аутентификации через веб-интерфейс (сессии Flask-Login).</p>
+        </div>
+        
+        <div class="mt-4">
+            <h6>Задачи</h6>
+            <div class="api-endpoint mb-3">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="api-method method-get">GET</span>
+                    <code>/api/tasks</code>
+                </div>
+                <p>Получение списка задач текущего пользователя.</p>
+                <p><strong>Параметры:</strong> <code>status</code>, <code>priority</code></p>
+            </div>
+            
+            <div class="api-endpoint mb-3">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="api-method method-get">GET</span>
+                    <code>/api/task/{id}</code>
+                </div>
+                <p>Получение конкретной задачи.</p>
+            </div>
+            
+            <div class="api-endpoint mb-3">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="api-method method-put">PUT</span>
+                    <code>/api/task/{id}</code>
+                </div>
+                <p>Обновление задачи.</p>
+                <p><strong>Параметры (JSON):</strong> <code>title</code>, <code>description</code>, <code>status</code>, <code>priority</code>, <code>due_date</code></p>
+            </div>
+            
+            <div class="api-endpoint mb-3">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="api-method method-delete">DELETE</span>
+                    <code>/api/task/{id}</code>
+                </div>
+                <p>Удаление задачи.</p>
+            </div>
+        </div>
+        
+        <div class="alert alert-info mt-4">
+            <h6>Пример использования через cURL:</h6>
+            <pre class="mt-2"><code># Получение задач (после аутентификации через браузер)
+curl -X GET http://localhost:5000/api/tasks \
+  -H "Cookie: session=ваш_session_cookie"</code></pre>
+        </div>
+    </div>
+</div>
+{% endblock %}
