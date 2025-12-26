@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Все задачи - Task Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Все задачи</h1>
+    <a href="{{ url_for('admin_users') }}" class="btn btn-outline-primary">
+        Управление пользователями
+    </a>
+</div>
+
+<!-- Фильтры и поиск -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('admin_all_tasks') }}" class="row g-3">
+            <div class="col-md-3">
+                <label for="status" class="form-label">Статус</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">Все статусы</option>
+                    <option value="new" {% if status == 'new' %}selected{% endif %}>Новая</option>
+                    <option value="in_progress" {% if status == 'in_progress' %}selected{% endif %}>В процессе</option>
+                    <option value="completed" {% if status == 'completed' %}selected{% endif %}>Завершена</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="priority" class="form-label">Приоритет</label>
+                <select class="form-select" id="priority" name="priority">
+                    <option value="">Все приоритеты</option>
+                    <option value="high" {% if priority == 'high' %}selected{% endif %}>Высокий</option>
+                    <option value="medium" {% if priority == 'medium' %}selected{% endif %}>Средний</option>
+                    <option value="low" {% if priority == 'low' %}selected{% endif %}>Низкий</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label for="user_id" class="form-label">Пользователь</label>
+                <select class="form-select" id="user_id" name="user_id">
+                    <option value="">Все пользователи</option>
+                    {% for user in users %}
+                    <option value="{{ user.id }}" {% if selected_user_id == user.id %}selected{% endif %}>
+                        {{ user.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Применить фильтры</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Список задач -->
+{% if tasks %}
+    <div class="row">
+        {% for task in tasks %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 {% if task.priority == 'high' %}priority-high{% elif task.priority == 'medium' %}priority-medium{% else %}priority-low{% endif %}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0">{{ task.title }}</h5>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary border-0" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ url_for('edit_task', task_id=task.id) }}"><i class="bi bi-pencil me-2"></i>Редактировать</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="POST" action="{{ url_for('delete_task', task_id=task.id) }}" class="d-inline">
+                                        <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Удалить эту задачу?')">
+                                            <i class="bi bi-trash me-2"></i>Удалить
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {% if task.status == 'new' %}
+                            <span class="status-badge task-status-new">Новая</span>
+                        {% elif task.status == 'in_progress' %}
+                            <span class="status-badge task-status-in-progress">В процессе</span>
+                        {% else %}
+                            <span class="status-badge task-status-completed">Завершена</span>
+                        {% endif %}
+                        
+                        {% if task.priority == 'high' %}
+                            <span class="badge bg-danger ms-2">Высокий приоритет</span>
+                        {% elif task.priority == 'medium' %}
+                            <span class="badge bg-warning ms-2">Средний приоритет</span>
+                        {% else %}
+                            <span class="badge bg-success ms-2">Низкий приоритет</span>
+                        {% endif %}
+                    </div>
+                    
+                    <p class="card-text text-muted mb-3">
+                        {% if task.description and task.description|length > 100 %}
+                            {{ task.description[:100] }}...
+                        {% elif task.description %}
+                            {{ task.description }}
+                        {% else %}
+                            <span class="fst-italic">Нет описания</span>
+                        {% endif %}
+                    </p>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+							<i class="bi bi-person me-1"></i>
+							{% set author = task.get_author() %}
+							{{ author.username if author else 'Неизвестно' }}
+						</small>
+                        
+                        <small class="text-muted">
+							<i class="bi bi-calendar-event me-1"></i>
+							{% if task.due_date %}
+								{{ task.due_date.strftime('%d.%m.%Y') }}
+							{% else %}
+								Нет срока
+							{% endif %}
+						</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Пагинация -->
+    {% if pagination and pagination.pages > 1 %}
+    <nav aria-label="Навигация по задачам">
+        <ul class="pagination justify-content-center">
+            {% if pagination.current_page > 1 %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin_all_tasks', page=pagination.current_page-1, status=status, priority=priority, user_id=selected_user_id) }}">Назад</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">Назад</span>
+            </li>
+            {% endif %}
+            
+            {% for page_num in range(1, pagination.pages + 1) %}
+                <li class="page-item {% if page_num == pagination.current_page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin_all_tasks', page=page_num, status=status, priority=priority, user_id=selected_user_id) }}">{{ page_num }}</a>
+                </li>
+            {% endfor %}
+            
+            {% if pagination.current_page < pagination.pages %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin_all_tasks', page=pagination.current_page+1, status=status, priority=priority, user_id=selected_user_id) }}">Вперед</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link">Вперед</span>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+{% else %}
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted mb-3"></i>
+            <h3 class="h4 text-muted">Задачи не найдены</h3>
+            <p class="text-muted mb-4">Задачи не найдены или не соответствуют выбранным фильтрам</p>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
