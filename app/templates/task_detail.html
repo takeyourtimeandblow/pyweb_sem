@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}{{ task.title }} - Task Manager{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Просмотр задачи</h4>
+                <div class="btn-group">
+                    <a href="{{ url_for('edit_task', task_id=task.id) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil"></i> Редактировать
+                    </a>
+                    <form method="POST" action="{{ url_for('delete_task', task_id=task.id) }}" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-outline-danger ms-1" onclick="return confirm('Удалить эту задачу?')">
+                            <i class="bi bi-trash"></i> Удалить
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body">
+                <h3 class="mb-4">{{ task.title }}</h3>
+                
+                <div class="mb-4">
+                    {% if task.status == 'new' %}
+                        <span class="status-badge task-status-new">Новая</span>
+                    {% elif task.status == 'in_progress' %}
+                        <span class="status-badge task-status-in-progress">В процессе</span>
+                    {% else %}
+                        <span class="status-badge task-status-completed">Завершена</span>
+                    {% endif %}
+                    
+                    {% if task.priority == 'high' %}
+                        <span class="badge bg-danger ms-2">Высокий приоритет</span>
+                    {% elif task.priority == 'medium' %}
+                        <span class="badge bg-warning ms-2">Средний приоритет</span>
+                    {% else %}
+                        <span class="badge bg-success ms-2">Низкий приоритет</span>
+                    {% endif %}
+                </div>
+                
+                {% if task.description %}
+                <div class="mb-4">
+                    <h5>Описание</h5>
+                    <div class="card">
+                        <div class="card-body">
+                            {{ task.description|replace('\n', '<br>')|safe }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Детали задачи</h5>
+                        <table class="table table-sm">
+                            <tr>
+								<th>Создана:</th>
+								<td>{{ task.created_at.strftime('%d.%m.%Y %H:%M') if task.created_at else 'Не указано' }}</td>
+							</tr>
+							<tr>
+								<th>Обновлена:</th>
+								<td>{{ task.updated_at.strftime('%d.%m.%Y %H:%M') if task.updated_at else 'Не указано' }}</td>
+							</tr>
+							<tr>
+								<th>Срок выполнения:</th>
+								<td>
+									{% if task.due_date %}
+										{{ task.due_date.strftime('%d.%m.%Y') }}
+										{% if now %}
+											{% set days_left = (task.due_date - now.date()).days %}
+											{% if days_left < 0 %}
+												<span class="badge bg-danger ms-2">Просрочена на {{ -days_left }} дней</span>
+											{% elif days_left == 0 %}
+												<span class="badge bg-warning ms-2">Сегодня</span>
+											{% elif days_left <= 3 %}
+												<span class="badge bg-warning ms-2">Осталось {{ days_left }} дня</span>
+											{% else %}
+												<span class="badge bg-success ms-2">Осталось {{ days_left }} дней</span>
+											{% endif %}
+										{% endif %}
+									{% else %}
+										Нет срока
+									{% endif %}
+								</td>
+							</tr>
+                        </table>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5>Действия</h5>
+                        <div class="d-grid gap-2">
+                            {% if task.status != 'completed' %}
+                            <form method="POST" action="{{ url_for('edit_task', task_id=task.id) }}" style="display: inline;">
+                                <input type="hidden" name="status" value="completed">
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="bi bi-check-circle"></i> Отметить как выполненную
+                                </button>
+                            </form>
+                            {% endif %}
+                            
+                            <a href="{{ url_for('tasks') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Вернуться к списку задач
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Автоматическое обновление статуса через AJAX
+    document.addEventListener('DOMContentLoaded', function() {
+        // Находим все формы изменения статуса
+        const statusForms = document.querySelectorAll('form[action*="edit_task"]');
+        
+        statusForms.forEach(form => {
+            const statusSelect = form.querySelector('select[name="status"]');
+            if (statusSelect) {
+                statusSelect.addEventListener('change', function() {
+                    // Можно добавить AJAX запрос для обновления статуса без перезагрузки страницы
+                    // form.submit();
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

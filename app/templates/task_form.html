@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if task %}Редактирование задачи - Task Manager{% else %}Создание задачи - Task Manager{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+        <div class="card">
+            <div class="card-header text-center py-3">
+                <h4 class="mb-0">
+                    {% if task %}
+                        Редактирование задачи
+                    {% else %}
+                        Создание новой задачи
+                    {% endif %}
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{% if task %}{{ url_for('edit_task', task_id=task.id) }}{% else %}{{ url_for('create_task') }}{% endif %}">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Название задачи *</label>
+                        <input type="text" class="form-control" id="title" name="title" 
+                               value="{{ task.title if task else '' }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Описание</label>
+                        <textarea class="form-control" id="description" name="description" rows="4">{{ task.description if task else '' }}</textarea>
+                        <div class="form-text">Максимум 1000 символов</div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="status" class="form-label">Статус *</label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="new" {% if task and task.status == 'new' %}selected{% endif %}>Новая</option>
+                                <option value="in_progress" {% if task and task.status == 'in_progress' %}selected{% endif %}>В процессе</option>
+                                <option value="completed" {% if task and task.status == 'completed' %}selected{% endif %}>Завершена</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="priority" class="form-label">Приоритет *</label>
+                            <select class="form-select" id="priority" name="priority" required>
+                                <option value="low" {% if task and task.priority == 'low' %}selected{% endif %}>Низкий</option>
+                                <option value="medium" {% if task and task.priority == 'medium' %}selected{% endif %}>Средний</option>
+                                <option value="high" {% if task and task.priority == 'high' %}selected{% endif %}>Высокий</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="due_date" class="form-label">Срок выполнения</label>
+                            <input type="date" class="form-control" id="due_date" name="due_date" 
+                                   value="{{ task.due_date.strftime('%Y-%m-%d') if task and task.due_date else '' }}">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="category" class="form-label">Категория</label>
+                            <input type="text" class="form-control" id="category" name="category" 
+                                   value="{{ task.category if task else '' }}">
+                        </div>
+                    </div>
+                    
+                    {% if current_user.is_admin and task %}
+                    <div class="mb-3">
+                        <label for="user_id" class="form-label">Пользователь</label>
+                        <select class="form-select" id="user_id" name="user_id">
+                            {% for user in all_users %}
+                            <option value="{{ user.id }}" {% if task.user_id == user.id %}selected{% endif %}>{{ user.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{{ url_for('tasks') }}" class="btn btn-outline-secondary me-md-2">Отмена</a>
+                        <button type="submit" class="btn btn-primary">
+                            {% if task %}
+                                Сохранить изменения
+                            {% else %}
+                                Создать задачу
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- API информация -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Создание задачи через API</h5>
+            </div>
+            <div class="card-body">
+                <p>Для создания задачи через API отправьте POST запрос на <code>/api/tasks</code> с заголовком Authorization и JSON данными:</p>
+                <pre class="bg-light p-3 rounded"><code>{
+  "title": "Название задачи",
+  "description": "Описание задачи",
+  "status": "new",
+  "priority": "medium",
+  "due_date": "2025-12-25"
+}</code></pre>
+                <p class="mb-0">Для редактирования задачи используйте PUT запрос на <code>/api/tasks/{id}</code></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
